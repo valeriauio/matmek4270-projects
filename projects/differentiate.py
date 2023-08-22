@@ -14,3 +14,7 @@ def test_differentiate():
     du1 = differentiate(u, dt)
     du2 = differentiate_vector(u, dt)
     assert np.allclose(du1, du2)
+
+if __name__ == '__main__':
+    test_differentiate()
+    
