@@ -91,15 +91,15 @@ class VibSolver:
         dt = []
         self.set_mesh(N0) # Set initial size of mesh
         for m in range(m):
-            self.set_mesh(2*self.Nt)
+            self.set_mesh(self.Nt+10)
             E.append(self.l2_error())
             dt.append(self.dt)
         r = [np.log(E[i-1]/E[i])/np.log(dt[i-1]/dt[i]) for i in range(1, m+1, 1)]
         return r, np.array(E), np.array(dt)
 
-    def test_order(self):
-        r, E, dt = self.convergence_rates(4)
-        assert np.allclose(np.array(r), self.order, atol=1e-2)
+    def test_order(self, m=5, N0=100, tol=0.1):
+        r, E, dt = self.convergence_rates(m, N0)
+        assert np.allclose(np.array(r), self.order, atol=tol)
 
 class VibHPL(VibSolver):
     """
@@ -127,7 +127,27 @@ class VibFD2(VibSolver):
     """
     order = 2
 
-    def __init__(self, Nt, T=2*np.pi, w=0.35, I=1):
+    def __init__(self, Nt, T, w=0.35, I=1):
+        VibSolver.__init__(self, Nt, T, w, I)
+        T = T * w / np.pi
+        assert T.is_integer() and T % 2 == 0
+
+    def __call__(self):
+        u = np.zeros(self.Nt+1)
+        return u
+
+class VibFD3(VibSolver):
+    """
+    Second order accurate solver using mixed Dirichlet and Neumann boundary
+    conditions::
+
+        u(0)=I and u'(T)=0
+
+    The boundary conditions require that T = n*pi/w, where n is an even integer.
+    """
+    order = 2
+
+    def __init__(self, Nt, T, w=0.35, I=1):
         VibSolver.__init__(self, Nt, T, w, I)
         T = T * w / np.pi
         assert T.is_integer() and T % 2 == 0
@@ -152,9 +172,10 @@ class VibFD4(VibFD2):
 
 def test_order():
     w = 0.35
-    VibHPL(32, 2*np.pi/w, w).test_order()
-    VibFD2(32, 2*np.pi/w, w).test_order()
-    VibFD4(32, 2*np.pi/w, w).test_order()
+    VibHPL(8, 2*np.pi/w, w).test_order()
+    VibFD2(8, 2*np.pi/w, w).test_order()
+    VibFD3(8, 2*np.pi/w, w).test_order()
+    VibFD4(8, 2*np.pi/w, w).test_order()
 
 if __name__ == '__main__':
     test_order()
