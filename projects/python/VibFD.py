@@ -45,6 +45,9 @@ class VibSolver:
         self.dt = self.T/Nt
         self.t = np.linspace(0, self.T, Nt+1)
 
+    def ue(self):
+        return self.I*sp.cos(self.w*t)
+
     def u_exact(self):
         """Exact solution of the vibration equation
 
@@ -53,7 +56,7 @@ class VibSolver:
         ue : array_like
             The solution at times n*dt
         """
-        return self.I*np.cos(self.w*self.t)
+        return sp.lambdify(t, self.ue())(self.t)
 
     def l2_error(self):
         """Compute the l2 error norm of solver
